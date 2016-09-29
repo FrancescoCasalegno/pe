@@ -15,6 +15,7 @@ PE_LIBRARIES := petsc pcu gmi mds apf apf_zoltan ma parma lion mth
 CXXFLAGS += $(foreach includedir,$(PE_INCLUDE_DIRS),-I$(includedir))
 LDFLAGS += $(foreach librarydir,$(PE_LIBRARY_DIRS),-L$(librarydir))
 LDFLAGS += $(foreach library,$(PE_LIBRARIES),-l$(library))
+LDFLAGS += -Wl,-rpath ${PETSC_LIB}
 
 .PHONY: all test clean
 
