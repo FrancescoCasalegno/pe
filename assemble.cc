@@ -8,6 +8,7 @@
 #include <apfDynamicMatrix.h>
 #include <gmi.h>
 #include <PCU.h>
+#include <functional>
 
 namespace pe {
 
@@ -28,7 +29,7 @@ static void assembleSystem(
     int o,
     apf::Mesh* m,
     apf::Field* f,
-    double (*rhs)(apf::Vector3 const& p),
+    std::function<double(apf::Vector3 const&)> rhs,
     apf::GlobalNumbering* n,
     LinSys* ls)
 {

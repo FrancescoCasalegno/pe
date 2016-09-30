@@ -4,6 +4,7 @@
 #include <apf.h>
 #include <apfDynamicVector.h>
 #include <apfDynamicMatrix.h>
+#include <functional>
 
 namespace pe {
 
@@ -11,7 +12,7 @@ struct IntegrateInput
 {
   int order;
   apf::Field* field;
-  double (*rhs)(apf::Vector3 const& p);
+  std::function<double(apf::Vector3 const&)> rhs;
 };
 
 class Integrate : public apf::Integrator
@@ -28,7 +29,7 @@ class Integrate : public apf::Integrator
     int ndims;
     apf::Field* u;
     apf::Element* e;
-    double (*rhs)(apf::Vector3 const& p);
+    std::function<double(apf::Vector3 const&)> rhs;
 };
 
 }

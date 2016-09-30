@@ -1,6 +1,8 @@
 #ifndef PE_APP_H
 #define PE_APP_H
 
+#include <functional>
+
 namespace apf {
 class Mesh;
 class Field;
@@ -46,8 +48,8 @@ class App
 
     LinSys* linsys;
 
-    double (*u)(apf::Vector3 const& p);
-    double (*rhs)(apf::Vector3 const& p);
+    std::function<double(apf::Vector3 const&)> u;
+    std::function<double(apf::Vector3 const&)> rhs;
 
     const char* out;
 };
