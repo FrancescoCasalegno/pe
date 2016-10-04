@@ -9,7 +9,6 @@ App::App(AppInput& in) :
   mesh(in.mesh),
   polynomialOrder(in.polynomialOrder),
   integrationOrder(in.integrationOrder),
-  u(in.u),
   rhs(in.rhs),
   out(in.out)
 {

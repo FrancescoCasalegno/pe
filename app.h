@@ -20,7 +20,6 @@ struct AppInput
   apf::Mesh* mesh;
   int polynomialOrder;
   int integrationOrder;
-  double (*u)(apf::Vector3 const& p);
   double (*rhs)(apf::Vector3 const& p);
   const char* out;
 };
@@ -48,7 +47,6 @@ class App
 
     LinSys* linsys;
 
-    std::function<double(apf::Vector3 const&)> u;
     std::function<double(apf::Vector3 const&)> rhs;
 
     const char* out;
