@@ -52,9 +52,9 @@ static void applyBCToSystem(
     apf::Mesh* m,
     apf::GlobalNumbering* gn,
     apf::Field* f,
+    std::function<double(apf::Vector3 const&)> g_diri,
     LinSys* ls)
 {
-  auto g_diri = [](apf::Vector3 const &p)->double { return ((p[0]<1.e-12)||(p[0]>1-1.e-12))?1.:0. ;};
   gmi_model* model = m->getModel();
   gmi_ent* boundary;
   gmi_iter* boundaries = gmi_begin(model, m->getDimension()-1);
@@ -83,7 +83,7 @@ void App::assemble()
 {
   double t0 = PCU_Time();
   assembleSystem(polynomialOrder, mesh, sol, rhs, shared, linsys);
-  applyBCToSystem(mesh, shared, sol, linsys);
+  applyBCToSystem(mesh, shared, sol, g_diri, linsys);
   double t1 = PCU_Time();
   print("assembled in %f seconds", t1-t0);
 }
