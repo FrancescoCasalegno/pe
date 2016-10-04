@@ -12,6 +12,7 @@ class LinSys
   public:
     LinSys(int n, long N);
     ~LinSys();
+    void setToVector(int sz, long* rows, double* vals);
     void addToVector(int sz, long* rows, double* vals);
     void addToMatrix(int sz, long* rows, double* vals);
     void zeroToVector(int sz, long* rows);

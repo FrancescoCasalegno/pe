@@ -26,6 +26,12 @@ LinSys::~LinSys()
   CALL( KSPDestroy(&solver) );
 }
 
+void LinSys::setToVector(int sz, long* rows, double* vals)
+{
+  PetscInt* r = (PetscInt*)rows;
+  CALL( VecSetValues(b, sz, r, vals, INSERT_VALUES) );
+}
+
 void LinSys::addToVector(int sz, long* rows, double* vals)
 {
   PetscInt* r = (PetscInt*)rows;

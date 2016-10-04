@@ -54,6 +54,7 @@ static void applyBCToSystem(
     apf::Field* f,
     LinSys* ls)
 {
+  auto g_diri = [](apf::Vector3 const &p)->double { return ((p[0]<1.e-12)||(p[0]>1-1.e-12))?1.:0. ;};
   gmi_model* model = m->getModel();
   gmi_ent* boundary;
   gmi_iter* boundaries = gmi_begin(model, m->getDimension()-1);
@@ -62,12 +63,17 @@ static void applyBCToSystem(
     apf::DynamicArray<apf::Node> nodes;
     apf::ModelEntity* b = reinterpret_cast<apf::ModelEntity*>(boundary);
     apf::getNodesOnClosure(m, b, nodes, apf::getShape(f));
-    int nnodes = nodes.getSize();
-    long rows[nnodes];
-    for (int n=0; n < nnodes; ++n)
-      rows[n] = apf::getNumber(gn, nodes[n]);
-    ls->diagMatRow(nnodes, rows);
-    ls->zeroToVector(nnodes, rows);
+    size_t nnodes = nodes.getSize();
+    std::vector<long>   v_rows; v_rows.reserve(nnodes);
+    std::vector<double> v_vals; v_vals.reserve(nnodes);
+    apf::Vector3 p;
+    for (auto&& nd : nodes) {
+            m->getPoint(nd.entity, nd.node, p);
+            v_vals.push_back(g_diri(p));  
+            v_rows.push_back(apf::getNumber(gn, nd));      
+    }
+    ls->diagMatRow(nnodes, &v_rows[0]);
+    ls->setToVector(nnodes, &v_rows[0], &v_vals[0]);
   }
   gmi_end(model, boundaries);
   ls->synchronize();
