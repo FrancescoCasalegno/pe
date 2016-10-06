@@ -13,7 +13,8 @@
 
 namespace {
 
-auto bd_condition = [](apf::Vector3 const& p)->BoundaryType{ return (p[0]>1.-1.e-12)?(NEUMANN):(DIRICHLET) ; };
+//auto bd_condition = [](apf::Vector3 const& p)->BoundaryType{ return (p[0]>1.-1.e-12)?(NEUMANN):(DIRICHLET) ; };
+auto bd_condition = [](apf::Vector3 const& p)->BoundaryType{ return DIRICHLET; };
 
 auto g_neu = [](apf::Vector3 const& p)->double{ return 1.; };
 
