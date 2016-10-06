@@ -125,7 +125,7 @@ static void applyDirBC(
     std::function<double(apf::Vector3 const&)> g_dir,
     LinSys* ls)
 {
-    apf::DynamicArray<apf::Node> nodes_diri;
+    apf::DynamicArray<apf::Node> nodes_dir;
     apf::FieldShape* f_sh = apf::getShape(f);
     gmi_model* mdl = m->getModel();
     gmi_ent* bdr_it;
@@ -145,12 +145,12 @@ static void applyDirBC(
     }
     gmi_end(mdl, bdr_its);
     synchronizeEntitySet(m, ent_set);
-    getNodesOnEntitySet(m, ent_set, nodes_diri, f_sh);
-    size_t n_nodes = nodes_diri.getSize();
+    getNodesOnEntitySet(m, ent_set, nodes_dir, f_sh);
+    size_t n_nodes = nodes_dir.getSize();
     std::vector<long>   v_rows; v_rows.reserve(n_nodes);
     std::vector<double> v_vals; v_vals.reserve(n_nodes);
     apf::Vector3 p;
-    for (auto&& nd : nodes_diri) {
+    for (auto&& nd : nodes_dir) {
             m->getPoint(nd.entity, nd.node, p);
             v_vals.push_back(g_dir(p)); 
             v_rows.push_back(apf::getNumber(gn, nd));      
@@ -174,69 +174,18 @@ static void applyBCToSystem(
     apf::Mesh* m,
     apf::GlobalNumbering* gn,
     apf::Field* f,
+    std::function<BoundaryType(apf::Vector3 const&)> bd_condition,
     std::function<double(apf::Vector3 const&)> g_dir,
     LinSys* ls)
 {
-    auto bd_condition = [](apf::Vector3 const& p)->BoundaryType{return DIRICHLET;}; 
     applyDirBC(m,f,gn, bd_condition, g_dir, ls);
-  //auto bd_condition = [](apf::Vector3 const& p)->BoundaryType{ return (p[0]>1.-1.e-12)?(NEUMANN):(DIRICHLET) ; };
-  //gmi_model* model = m->getModel();
-  //gmi_ent* boundary;
-  //gmi_iter* boundaries = gmi_begin(model, m->getDimension()-1);
-  //int iter_n = 0; ///....
-  //while ((boundary = gmi_next(model, boundaries)))
-  //{
-  //  apf::DynamicArray<apf::Node> nodes;
-  //  apf::ModelEntity* b = reinterpret_cast<apf::ModelEntity*>(boundary);
-  //  /// Looping over ...
-  //  int rk; MPI_Comm_rank(MPI_COMM_WORLD, &rk);
-  //  apf::MeshIterator* it = m->begin(m->getModelType(b));
-  //  apf::MeshEntity* mesh_ent;
-  //  while(mesh_ent = m->iterate(it))
-  //  {
-  //    if (m->toModel(mesh_ent)==b) {
-  //      apf::MeshElement* mesh_el = apf::createMeshElement(m, mesh_ent);
-  //      apf::Vector3 p = apf::getLinearCentroid(m, mesh_ent);
-  //      std::string str_t; 
-  //      switch (bd_condition(p)) {
-  //        case NEUMANN:
-  //            // applyNeuBC(...);
-  //            str_t = "NEUMANN";
-  //            break;
-  //        case DIRICHLET:
-  //            //apf::NewArray<long> numbers;
-  //            //int sz = apf::getElementNumbers(gn, mesh_ent, numbers);
-  //            //printf("Rank %d (iter_n=%d) has %d dofs on it: %d, %d\n", rk, iter_n, sz, numbers[0], numbers[1]);
-  //            str_t = "DIRICHLET";
-  //            break;
-  //      }  
-  //      printf("Rank %d (iter_n=%d) has zentrum: (%f, %f, %f)----->%s\n", rk, iter_n, p[0],p[1],p[2], str_t.c_str());
-  //    }
-  //  }
-  //  /// ... end looping
-  //  apf::getNodesOnClosure(m, b, nodes, apf::getShape(f));
-  //  size_t nnodes = nodes.getSize();
-  //  std::vector<long>   v_rows; v_rows.reserve(nnodes);
-  //  std::vector<double> v_vals; v_vals.reserve(nnodes);
-  //  apf::Vector3 p;
-  //  for (auto&& nd : nodes) {
-  //          m->getPoint(nd.entity, nd.node, p);
-  //          v_vals.push_back(g_diri(p)); 
-  //          v_rows.push_back(apf::getNumber(gn, nd));      
-  //  }
-  //  ls->diagMatRow(nnodes, &v_rows[0]);
-  //  ls->setToVector(nnodes, &v_rows[0], &v_vals[0]);
-  //  ++iter_n;
-  //}
-  //gmi_end(model, boundaries);
-  //ls->synchronize();
 }
 
 void App::assemble()
 {
   double t0 = PCU_Time();
   assembleSystem(polynomialOrder, mesh, sol, rhs, shared, linsys);
-  applyBCToSystem(mesh, shared, sol, g_diri, linsys);
+  applyBCToSystem(mesh, shared, sol, bd_condition, g_dir, linsys);
   double t1 = PCU_Time();
   print("assembled in %f seconds", t1-t0);
 }

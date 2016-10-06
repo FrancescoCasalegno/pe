@@ -1,6 +1,7 @@
 #ifndef PE_APP_H
 #define PE_APP_H
 
+#include "bd_type.h"
 #include <functional>
 
 namespace apf {
@@ -20,7 +21,8 @@ struct AppInput
   apf::Mesh* mesh;
   int polynomialOrder;
   int integrationOrder;
-  std::function<double(apf::Vector3 const&)> g_diri;
+  std::function<BoundaryType(apf::Vector3 const&)> bd_condition;
+  std::function<double(apf::Vector3 const&)> g_dir;
   std::function<double(apf::Vector3 const&)> rhs;
   const char* out;
 };
@@ -48,7 +50,8 @@ class App
 
     LinSys* linsys;
 
-    std::function<double(apf::Vector3 const&)> g_diri;
+    std::function<BoundaryType(apf::Vector3 const&)> bd_condition;
+    std::function<double(apf::Vector3 const&)> g_dir;
     std::function<double(apf::Vector3 const&)> rhs;
 
     const char* out;
