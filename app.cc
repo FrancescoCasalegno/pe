@@ -10,6 +10,7 @@ App::App(AppInput& in) :
   polynomialOrder(in.polynomialOrder),
   integrationOrder(in.integrationOrder),
   bd_condition(in.bd_condition),
+  g_neu(in.g_neu),
   g_dir(in.g_dir),
   rhs(in.rhs),
   out(in.out)

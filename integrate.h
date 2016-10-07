@@ -36,7 +36,7 @@ class Integrate : public apf::Integrator
 class IntegrateNeuBC : public apf::Integrator
 {
 public:
-    IntegrateNeuBC(int integr_ord, apf::Field* f, std::function<double(apf::Vector3 const&)> g_Neu);
+    IntegrateNeuBC(int integr_ord, apf::Field* f, std::function<double(apf::Vector3 const&)> g_neu);
     void inElement(apf::MeshElement*) override;
     void outElement() override;
     void atPoint(apf::Vector3 const& p, double w, double dv) override;
@@ -46,7 +46,7 @@ private:
     int n_dims;
     apf::Field* f;
     apf::Element* e;
-    std::function<double(apf::Vector3 const&)> g_Neu;
+    std::function<double(apf::Vector3 const&)> g_neu;
 
 };
 

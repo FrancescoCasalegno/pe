@@ -52,10 +52,10 @@ void Integrate::atPoint(apf::Vector3 const& p, double w, double dv)
 }
 
 //-------------------------
-IntegrateNeuBC::IntegrateNeuBC(int integr_ord, apf::Field* f, std::function<double(apf::Vector3 const&)> g_Neu) : 
+IntegrateNeuBC::IntegrateNeuBC(int integr_ord, apf::Field* f, std::function<double(apf::Vector3 const&)> g_neu) : 
     apf::Integrator(integr_ord),
     f(f),
-    g_Neu(g_Neu),
+    g_neu(g_neu),
     n_dims(apf::getMesh(f)->getDimension()-1)
 {
 }
@@ -77,11 +77,13 @@ void IntegrateNeuBC::outElement()
 void IntegrateNeuBC::atPoint(apf::Vector3 const& p, double w, double dv)
 {
   apf::NewArray<double> BF;
+  apf::getShapeValues(e,p,BF);
+  
   apf::Vector3 x;
   apf::MeshElement* me = apf::getMeshElement(e);
   apf::mapLocalToGlobal(me,p,x);
-
+  
   for (int a=0; a<n_dofs; ++a)
-    fe(a) += g_Neu(x) * BF[a] * w * dv;
+    fe(a) += g_neu(x) * BF[a] * w * dv;
 }
 }

@@ -22,6 +22,7 @@ struct AppInput
   int polynomialOrder;
   int integrationOrder;
   std::function<BoundaryType(apf::Vector3 const&)> bd_condition;
+  std::function<double(apf::Vector3 const&)> g_neu;
   std::function<double(apf::Vector3 const&)> g_dir;
   std::function<double(apf::Vector3 const&)> rhs;
   const char* out;
@@ -51,6 +52,7 @@ class App
     LinSys* linsys;
 
     std::function<BoundaryType(apf::Vector3 const&)> bd_condition;
+    std::function<double(apf::Vector3 const&)> g_neu;
     std::function<double(apf::Vector3 const&)> g_dir;
     std::function<double(apf::Vector3 const&)> rhs;
 
