@@ -3,12 +3,12 @@
 
 namespace pe {
 
-Integrate::Integrate(IntegrateInput& in) :
-  apf::Integrator(in.order),
-  u(in.field),
-  rhs(in.rhs)
+Integrate::Integrate(int integr_ord, apf::Field* f, std::function<double(apf::Vector3 const&)> rhs_fun) :
+    apf::Integrator(integr_ord),
+    u(f),
+    rhs(rhs_fun),
+    ndims(apf::getMesh(f)->getDimension())
 {
-  ndims = apf::getMesh(u)->getDimension();
 }
 
 void Integrate::inElement(apf::MeshElement* me)

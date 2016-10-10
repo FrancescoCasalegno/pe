@@ -8,17 +8,10 @@
 
 namespace pe {
 
-struct IntegrateInput
-{
-  int order;
-  apf::Field* field;
-  std::function<double(apf::Vector3 const&)> rhs;
-};
-
 class Integrate : public apf::Integrator
 {
   public:
-    Integrate(IntegrateInput& in);
+    Integrate(int integr_ord, apf::Field* f, std::function<double(apf::Vector3 const&)> rhs_fun);
     void inElement(apf::MeshElement*) override;
     void outElement() override;
     void atPoint(apf::Vector3 const& p, double w, double dv) override;

@@ -16,23 +16,18 @@ namespace pe {
 
 class LinSys;
 
-struct AppInput
-{
-  apf::Mesh* mesh;
-  int polynomialOrder;
-  int integrationOrder;
-  std::function<BoundaryType(apf::Vector3 const&)> bd_condition;
-  std::function<double(apf::Vector3 const&)> g_neu;
-  std::function<double(apf::Vector3 const&)> g_dir;
-  std::function<double(apf::Vector3 const&)> rhs;
-  const char* out;
-};
-
 class App
 {
   public:
 
-    App(AppInput& in);
+    App(apf::Mesh* m, 
+        int pol_o, 
+        int integr_o, 
+        std::function<BoundaryType(apf::Vector3 const&)> bd_cond,  
+        std::function<double(apf::Vector3 const&)> neu_fun,  
+        std::function<double(apf::Vector3 const&)> dir_fun, 
+        std::function<double(apf::Vector3 const&)> rhs_fun, 
+        const char* out_name);
     void run();
 
   private:

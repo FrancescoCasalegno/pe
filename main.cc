@@ -58,8 +58,7 @@ int main(int argc, char** argv)
   initialize();
   gmi_register_mesh();
   apf::Mesh2* m = apf::loadMdsMesh(geom, mesh);
-  pe::AppInput in = { m, fem_ord, integr_ord, bd_condition, g_dir, rhs, out };
-  pe::App app(in);
+  pe::App app(m, fem_ord, integr_ord, bd_condition, g_neu, g_dir, rhs, out);
   app.run();
   m->destroyNative();
   apf::destroyMesh(m);

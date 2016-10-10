@@ -48,8 +48,7 @@ static void assembleSystem(
     apf::GlobalNumbering* n,
     LinSys* ls)
 {
-  IntegrateInput in = { o, f, rhs};
-  Integrate integrate(in);
+  Integrate integrate(o, f, rhs);
   apf::MeshEntity* elem;
   apf::MeshIterator* elems = m->begin(m->getDimension());
   while ((elem = m->iterate(elems)))
