@@ -1,6 +1,6 @@
 #include "app.h"
 #include "utils.h"
-#include "bd_type.h" 
+#include "bd_cond.h" 
 #include <petscsys.h>
 #include <apf.h>
 #include <apfShape.h>

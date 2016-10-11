@@ -2,7 +2,7 @@
 #include "utils.h"
 #include "linsys.h"
 #include "integrate.h"
-#include "bd_type.h"
+#include "bd_cond.h"
 #include <apf.h>
 #include <apfNumbering.h>
 #include <apfDynamicVector.h>
@@ -40,6 +40,7 @@ static void addToSystem(
   ls->addToMatrix(sz, &numbers[0], &ke(0,0));
 }
 
+// Assemble Linear System, according to the PDE inside the domain
 static void assembleSystem(
     int o,
     apf::Mesh* m,
@@ -63,70 +64,7 @@ static void assembleSystem(
 }
 
 
-////-----------------------------------------------------------------------------
-typedef std::set<apf::MeshEntity*> EntitySet;
-
-static void getClosureEntitiesWithNodes(
-    apf::Mesh* m,
-    apf::MeshEntity* e,
-    EntitySet& out,
-    apf::FieldShape* s)
-{
-  int D = getDimension(m, e);
-  for (int d=0; d <= D; ++d)
-    if (s->hasNodesIn(d))
-    {
-      apf::Downward de;
-      int nde = m->getDownward(e,d,de);
-      for (int i=0; i < nde; ++i)
-      out.insert(de[i]);
-    }
-}
-
-static void synchronizeEntitySet(
-    apf::Mesh* m,
-    EntitySet& set)
-{
-  PCU_Comm_Begin();
-  APF_ITERATE(EntitySet,set,it)
-    if (m->isShared(*it))
-    {
-      apf::Copies remotes;
-      m->getRemotes(*it,remotes);
-      APF_ITERATE(apf::Copies,remotes,rit)
-        PCU_COMM_PACK(rit->first,rit->second);
-    }
-  PCU_Comm_Send();
-  while (PCU_Comm_Receive())
-  {
-    apf::MeshEntity* e;
-    PCU_COMM_UNPACK(e);
-    set.insert(e);
-  }
-}
-
-static void getNodesOnEntitySet(
-    apf::Mesh* m,
-    EntitySet& s,
-    apf::DynamicArray<apf::Node>& n,
-    apf::FieldShape* sh)
-{
-  size_t size = 0;
-  APF_ITERATE(EntitySet,s,it) {
-    int nen = sh->countNodesOn(m->getType(*it));
-    size += nen;
-  }
-  n.setSize(size);
-  size_t i=0;
-  APF_ITERATE(EntitySet,s,it) {
-    int nen = sh->countNodesOn(m->getType(*it));
-    for (int j=0; j < nen; ++j)
-      n[i++] = apf::Node(*it,j);
-  }
-  assert(i==size);
-}
-////-----------------------------------------------------------------------------
-
+// Modify Linear System, enforcing Dirichlet boundary conditions
 static void applyDirBC(
     apf::Mesh* m,
     apf::Field* f,
@@ -135,33 +73,12 @@ static void applyDirBC(
     std::function<double(apf::Vector3 const&)> g_dir,
     LinSys* ls)
 {
-    apf::DynamicArray<apf::Node> nodes_dir;
-    apf::FieldShape* f_sh = apf::getShape(f);
-    gmi_model* mdl = m->getModel();
-    gmi_ent* bdr_it;
-    gmi_iter* bdr_its = gmi_begin(mdl, m->getDimension()-1);
-    EntitySet ent_set;
-    while (bdr_it = gmi_next(mdl, bdr_its)) { // for each model bdr...
-        apf::ModelEntity* bdr = reinterpret_cast<apf::ModelEntity*>(bdr_it);
-        apf::MeshIterator* it = m->begin(m->getModelType(bdr)); 
-        apf::MeshEntity* mesh_ent;
-        while (mesh_ent = m->iterate(it)) { // for each entity in the model bdr...
-            if (m->toModel(mesh_ent)==bdr) {
-                if (bd_condition(apf::getLinearCentroid(m, mesh_ent))==DIRICHLET) { 
-                    getClosureEntitiesWithNodes(m, mesh_ent, ent_set, f_sh);
-                }
-            }
-        }
-        m->end(it);
-    }
-    gmi_end(mdl, bdr_its);
-    synchronizeEntitySet(m, ent_set);
-    getNodesOnEntitySet(m, ent_set, nodes_dir, f_sh);
-    size_t n_nodes = nodes_dir.getSize();
+    auto vec_dir_nodes = getDirNodes(m, apf::getShape(f), bd_condition);
+    size_t n_nodes = vec_dir_nodes.size();
     std::vector<long>   v_rows; v_rows.reserve(n_nodes);
     std::vector<double> v_vals; v_vals.reserve(n_nodes);
     apf::Vector3 p;
-    for (auto&& nd : nodes_dir) {
+    for (auto&& nd : vec_dir_nodes) {
         m->getPoint(nd.entity, nd.node, p);
         v_vals.push_back(g_dir(p)); 
         v_rows.push_back(apf::getNumber(gn, nd));  
@@ -172,6 +89,7 @@ static void applyDirBC(
 }
 
 
+// Modify Linear System, enforcing Neumann boundary conditions
 static void applyNeuBC(
     int integr_ord,
     apf::Mesh* m,
@@ -183,28 +101,13 @@ static void applyNeuBC(
 {
     IntegrateNeuBC integrate_neu_bc(integr_ord, f, g_neu);
     apf::FieldShape* f_sh = apf::getShape(f);
-    gmi_model* mdl = m->getModel();
-    gmi_ent* bdr_it;
-    gmi_iter* bdr_its = gmi_begin(mdl, m->getDimension()-1);
-    EntitySet ent_set;
-    while (bdr_it = gmi_next(mdl, bdr_its)) { // for each model bdr...
-        apf::ModelEntity* bdr = reinterpret_cast<apf::ModelEntity*>(bdr_it);
-        apf::MeshIterator* it = m->begin(m->getModelType(bdr)); 
-        apf::MeshEntity* mesh_ent;
-        while (mesh_ent = m->iterate(it)) { // for each entity in the model bdr...
-            if (m->toModel(mesh_ent)==bdr) {
-                if (bd_condition(apf::getLinearCentroid(m, mesh_ent))==NEUMANN) { 
-                    int rk; MPI_Comm_rank(MPI_COMM_WORLD, &rk);
-                    apf::MeshElement* mesh_el = apf::createMeshElement(m, mesh_ent);
-                    integrate_neu_bc.process(mesh_el);
-                    addToRHS(integrate_neu_bc.fe, mesh_ent, gn, ls);                     
-                    apf::destroyMeshElement(mesh_el);
-                }
-            }
-        }
-        m->end(it);
+    auto vec_neu_ents = getNeuMeshEntities(m, bd_condition);
+    for (auto&& mesh_ent : vec_neu_ents) {
+        apf::MeshElement* mesh_el = apf::createMeshElement(m, mesh_ent);
+        integrate_neu_bc.process(mesh_el);
+        addToRHS(integrate_neu_bc.fe, mesh_ent, gn, ls);                     
+        apf::destroyMeshElement(mesh_el);
     }
-    gmi_end(mdl, bdr_its);
     ls->synchronize();
 }
 
@@ -225,8 +128,9 @@ static void applyBCToSystem(
 void App::assemble()
 {
   double t0 = PCU_Time();
-  assembleSystem(polynomialOrder, mesh, sol, rhs, shared, linsys);
-  applyBCToSystem(mesh, shared, sol, bd_condition, g_neu, g_dir, linsys);
+  assembleSystem(integrationOrder, mesh, sol, rhs, shared, linsys);
+  applyNeuBC(integrationOrder, mesh, sol, shared, bd_condition, g_neu, linsys);
+  applyDirBC(mesh, sol, shared, bd_condition, g_dir, linsys);
   double t1 = PCU_Time();
   print("assembled in %f seconds", t1-t0);
 }

@@ -22,6 +22,7 @@ endif()
 set(SOURCES
 app.cc
 assemble.cc
+bd_cond.cc
 integrate.cc
 linsys.cc
 post.cc
@@ -32,6 +33,7 @@ utils.cc
 
 set(HEADERS
 app.h
+bd_cond.h
 integrate.h
 linsys.h
 utils.h
