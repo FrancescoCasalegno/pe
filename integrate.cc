@@ -1,5 +1,6 @@
 #include "integrate.h"
 #include <apfMesh.h>
+#include <cmath>
 
 namespace pe {
 
@@ -47,7 +48,8 @@ void Integrate::atPoint(apf::Vector3 const& p, double w, double dv)
     fe(a) += rhs(x) * BF[a] * w * dv;
     for (int b=0; b < ndofs; ++b)
     for (int i=0; i < ndims; ++i)
-      ke(a,b) += gradBF[a][i] * gradBF[b][i] * w * dv; 
+      ke(a,b) += 0.1 * gradBF[a][i] * gradBF[b][i] * w * dv +
+                 1./std::sqrt(2) * gradBF[b][i] * BF[a] * w * dv; 
   }
 }
 

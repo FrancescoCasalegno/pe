@@ -26,7 +26,7 @@ auto g_dir = [](apf::Vector3 const& p)->double{ return 0.; };
 // auto rhs = [](apf::Vector3 const& p)->double{ return std::sin(2*M_PI*p[0])*std::sin(2*M_PI*p[1]); };
 
 // This RHS corresponds to the exact solution u(x,y) = x^4*(1-x)*y*(1-y)
-auto rhs = [](apf::Vector3 const& p)->double{ return -2*p[0]*p[0]*( p[0]*p[0]*p[0] - p[0]*p[0] + 10*p[0]* (p[1]-1) * p[1] - 6*p[1]*(p[1]-1)); };
+auto rhs = [](apf::Vector3 const& p)->double{ return -1.; };
 
 
 void initialize()
@@ -53,8 +53,8 @@ int main(int argc, char** argv)
   const char* geom = argv[1];
   const char* mesh = argv[2];
   const char* out = argv[3];
-  const int fem_ord = 1;
-  const int integr_ord = 1;  
+  const int fem_ord = 2;
+  const int integr_ord = 2;  
   initialize();
   gmi_register_mesh();
   apf::Mesh2* m = apf::loadMdsMesh(geom, mesh);
